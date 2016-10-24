@@ -1,0 +1,106 @@
+#!/usr/bin/perl
+#
+# atom_debian_packager
+#
+# Creates Debian packages for an Atom package and its dependencies
+#
+# You must install atom and the atom2debian script
+#
+# Usage:
+# $ atom_debian_packager PACKAGE
+#
+# Copyright (c) 2016 by Salvador E. Tropea <salvador@inti.gob.ar>
+# Copyright (c) 2016 by Instituto Nacional de Tecnologia Industrial
+#                       Centro de Micro y Nanoelectrónica (CMNB)
+#
+# This package is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This package is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>
+#
+use JSON;
+use File::Basename;
+use Cwd qw(abs_path);
+#use Data::Dumper;
+
+$atom_apm='/usr/share/atom/resources/app/apm/bin/apm';
+
+
+die "Atom must be installed" unless -e $atom_apm;
+
+die "Usage: atom_debian_packager PACKAGE\n" if scalar(@ARGV)!=1;
+
+print "Trying to generate $ARGV[0] Debian packages\n";
+
+$path=abs_path(dirname(__FILE__));
+
+`rm -r Work`;
+mkdir("Work");
+chdir("Work");
+Process($ARGV[0]);
+print "That all!\n";
+0;
+
+sub Process
+{
+ my $name=shift @_;
+
+ print "Getting information about $name ...\n";
+ my $jtext=`$atom_apm view --json $name`;
+ die "Failed to get information: $jtext" unless $jtext;
+ my $text=decode_json($jtext);
+ my $url=$$text{'dist'}{'tarball'};
+ die "No tarball specified" unless $url;
+
+ my $deps=$$text{'package-deps'};
+ my $dep;
+ if ($deps)
+   {
+    print "Package dependencies: ";
+    foreach $dep (@$deps)
+       {
+        print "$dep, ";
+       }
+    print "\n";
+   }
+ else
+   {
+    print "No dependencies\n";
+   }
+
+ print "Downloading the tarball ...\n";
+ my $ret=system("wget -O $name.tar \"$url\" 2>> download.log");
+ die "Failed to download the tarball" if $ret;
+
+ print "Uncompressing the tarball ...\n";
+ my $lfiles=`tar xvf $name.tar`;
+ die "Failed to uncompress the tarball" if $?;
+ die "Tar output doesn't start with a directory" unless $lfiles=~/^(.*)\//;
+ my $dir_pkg=$1;
+
+ print "Genererating Debian package for $name ($dir_pkg) ...\n\n";
+ die "We didn't get $dir_pkg dir after uncompressing!" unless -d $dir_pkg;
+ chdir($dir_pkg);
+ system("perl $path/atom2debian");
+ die "Failed!" if $ret;
+ print "\n";
+ chdir('..');
+
+ if ($deps)
+   {
+    print "Generating packages for its dependencies ...\n";
+    foreach $dep (@$deps)
+       {
+        print "Dependency: $dep\n\n";
+        Process($dep);
+       }
+   }
+}

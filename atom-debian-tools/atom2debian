@@ -1,0 +1,181 @@
+#!/usr/bin/perl
+#
+# atom2debian
+#
+# Converts an Atom package into a Debian package.
+#
+# Usage:
+# $ cd PACKAGE_DIR
+# $ atom2debian
+#
+# If you want to generate a package XXX-2 just use "atom2debian 2"
+#
+# Copyright (c) 2016 by Salvador E. Tropea <salvador@inti.gob.ar>
+# Copyright (c) 2016 by Instituto Nacional de Tecnologia Industrial
+#                       Centro de Micro y Nanoelectrónica (CMNB)
+#
+# This package is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This package is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>
+#
+use JSON;
+#use Data::Dumper;
+
+$atom_apm='/usr/share/atom/resources/app/apm/bin/apm';
+
+die "You must run this script from the Atom package directory" unless -e 'package.json';
+die "Atom must be installed" unless -e $atom_apm;
+
+$rel_ver=1;
+$rel_ver=$ARGV[0] if scalar(@ARGV)==1;
+
+$json=cat('package.json');
+
+$text=decode_json($json);
+
+$name=$$text{'name'};
+die "No name defined!" unless $name;
+print "Package name: $name\n";
+$name_ori=$name;
+
+$version=$$text{'version'};
+die "No version defined!" unless $version;
+print "Version: $version\n";
+
+$deps=$$text{'package-deps'};
+if ($deps)
+  {
+   print "Package dependencies: ";
+   foreach $dep (@$deps)
+      {
+       print "$dep, ";
+       $depes.="atom-$dep, ";
+      }
+   print "\n";
+  }
+else
+  {
+   print "No dependencies\n";
+  }
+
+$desc=$$text{'description'};
+die "No description defined!" unless $desc;
+print "Description: $desc\n";
+
+$lic=$$text{'license'};
+die "No license defined!" unless $lic;
+print "License: $lic\n";
+
+$home=$$text{'homepage'};
+print "Homepage: $home\n" if $home;
+
+print "Cleaning old build ...\n";
+`rm -fr debian`;
+
+print "Creating Debian files ...\n";
+mkdir('debian');
+mkdir('debian/source');
+$aux="3.0 (quilt)\n";
+replace('debian/source/format',$aux);
+$name='atom-'.$name;
+$aux="$name ($version-$rel_ver) stable; urgency=medium\n".
+     "\n".
+     "  * Initial release\n".
+     "\n".
+     " -- Salvador Eduardo Tropea <salvador@inti.gob.ar>  Tue, 18 Oct 2016 13:06:27 -0300\n";
+replace('debian/changelog',$aux);
+$aux="9\n";
+replace('debian/compat',$aux);
+$aux="Source: $name\n".
+     "Section: editors\n".
+     "Priority: optional\n".
+     "Maintainer: Salvador E. Tropea <salvador@inti.gob.ar>\n".
+     "Build-Depends: debhelper (>= 9), atom, atom-debian-tools\n".
+     "Standards-Version: 3.9.7\n";
+$aux.="Homepage: $home\n" if $home;
+$aux.="\n".
+      "Package: $name\n".
+      "Architecture: all\n";
+$aux.="Depends: $depes atom, atom-debian-tools\n" if $deps;
+$aux.="Description: $desc\n".
+      " Provides the $name_ori package for Atom\n";
+replace('debian/control',$aux);
+$aux="Distributed under the $lic license\n";
+replace('debian/copyright',$aux);
+$aux="#!/usr/bin/make -f\n".
+     "# -*- makefile -*-\n".
+     "\n".
+     "# Uncomment this to turn on verbose mode.\n".
+     "#export DH_VERBOSE=1\n".
+     "\n".
+     "%:\n".
+     "\tdh \$\@\n";
+replace('debian/rules',$aux);
+chmod(0755,'debian/rules');
+if (-e 'README.md')
+  {
+   $aux="README.md\n";
+   replace('debian/docs',$aux);
+  }
+
+print "Creating Makefile ...\n";
+$aux="INST_DIR := /usr/lib/atom/packages\n".
+     "\n".
+     "all:\n".
+     "\n".
+     "install:\n".
+     "\tinstall -m 0755 -d \$(DESTDIR)\$(INST_DIR)/$name_ori\n".
+     "\tcp -r `ls -1 | grep -v debian` \$(DESTDIR)\$(INST_DIR)/$name_ori\n".
+     "\tfind \$(DESTDIR)\$(INST_DIR) -type d -print0 | xargs -0 chmod 755\n".
+     "\tfind \$(DESTDIR)\$(INST_DIR) -type f -print0 | xargs -0 chmod 644\n";
+replace('Makefile',$aux);
+
+print "Solving JavaScript dependencies ...\n";
+`rm -rf node_modules`;
+$ret=system("$atom_apm install --production");
+die "Resultado no es 0: $ret\n" if $ret;
+
+print "Creating Debian package ...\n";
+$ret=system("fakeroot dpkg-buildpackage -b -uc > .stdout.log 2> .stderr.log");
+die "Resultado no es 0: $ret\n" if $ret;
+
+print "Cleaning ...\n";
+`rm -rf node_modules debian Makefile .stderr.log .stdout.log`;
+
+print "Success!\n";
+
+
+#print Dumper($text);
+0;
+
+sub cat
+{
+ local $/;
+ my $b;
+
+ open(FIL,$_[0]) || return 0;
+ $b=<FIL>;
+ close(FIL);
+
+ $b;
+}
+
+sub replace
+{
+ my $b=$_[1];
+
+ open(FIL,">$_[0]") || return 0;
+ print FIL ($b);
+ close(FIL);
+}
+
+

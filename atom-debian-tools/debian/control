@@ -1,0 +1,15 @@
+Source: atom-debian-tools
+Section: editors
+Priority: optional
+Maintainer: Salvador E. Tropea <salvador@inti.gob.ar>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.7
+
+Package: atom-debian-tools
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, libjson-perl, atom
+Description: Scripts to create and handel Atom packages for Debian
+ Provides tools to create .deb files from Atom packages.
+ Helps to install the Atom packages at system level.
+
+

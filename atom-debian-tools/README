@@ -1,0 +1,27 @@
+Atom packages Debian Tools
+--------------------------
+Author: Salvador E. Tropea
+
+Motivation:
+-----------
+
+Atom plug-ins are installed in ~/.atom/packages
+As a consequence a machine with more than one user wastes disk space.
+Having a mechanism to share packages is a good idea, but not yet implemented:
+
+https://github.com/atom/apm/issues/506
+
+What are these scripts?
+-----------------------
+
+atom_link_system_pkg
+Links packages installed in /usr/lib/atom/packages/ into ~/.atom/packages/
+
+atom2debian
+Converts an Atom package into a Debian package.
+
+atom_debian_packager
+Downloads an Atom package, and its package dependencies, and generates Debian
+packages.
+
+

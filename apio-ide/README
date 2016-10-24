@@ -1,0 +1,6 @@
+apio-ide is a meta-package, it depends on atom-apio-ide which is the real
+package and also pulls the whole apio + apio-packages
+
+The meta-package is generated using:
+
+equivs-build ns-control

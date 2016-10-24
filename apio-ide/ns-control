@@ -1,0 +1,28 @@
+### Commented entries have reasonable defaults.
+### Uncomment to edit them.
+# Source: <source package name; defaults to package name>
+Section: electronics
+Priority: optional
+Homepage: https://github.com/fpgawars/apio-ide
+Standards-Version: 3.9.2
+
+Package: apio-ide
+Version: 0.6.3-1
+Maintainer: Salvador E. Tropea <salvador@inti.gob.ar>
+# Pre-Depends: <comma-separated list of packages>
+Depends: atom-apio-ide, apio, apio-examples, apio-icestorm, apio-scons, apio-iverilog, apio-usb-ftdi
+# Recommends: <comma-separated list of packages>
+# Suggests: <comma-separated list of packages>
+# Provides: <comma-separated list of packages>
+# Replaces: <comma-separated list of packages>
+# Architecture: all
+# Copyright: <copyright file; defaults to GPL2>
+# Changelog: <changelog file; defaults to a generic changelog>
+# Readme: <README.Debian file; defaults to a generic one>
+# Extra-Files: <comma-separated list of additional files for the doc directory>
+# Files: <pair of space-separated paths; First is file to include, second is destination>
+#  <more pairs, if there's more than one file to include. Notice the starting space>
+Description: APIO-IDE Develop hardware for open FPGAs easily
+ This meta-package installs Atom, the APIO-IDE package, APIO and all the
+ tools needed to develope using Verilog and iCE40 FPGAs.
+
