@@ -7,10 +7,10 @@ Homepage: https://github.com/fpgawars/apio-ide
 Standards-Version: 3.9.2
 
 Package: apio-ide
-Version: 0.6.3-1
+Version: 0.6.3-2
 Maintainer: Salvador E. Tropea <salvador@inti.gob.ar>
 # Pre-Depends: <comma-separated list of packages>
-Depends: atom-apio-ide, apio, apio-examples, apio-icestorm, apio-scons, apio-iverilog, apio-usb-ftdi
+Depends: atom-apio-ide, apio, apio-examples, apio-icestorm, apio-scons, apio-iverilog, apio-system
 # Recommends: <comma-separated list of packages>
 # Suggests: <comma-separated list of packages>
 # Provides: <comma-separated list of packages>
